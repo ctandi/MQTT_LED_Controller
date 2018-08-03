@@ -48,7 +48,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
   tv = spayload.substring(sci + 1, tci);
   fov = spayload.substring(tci + 1, foci);
   fiv = spayload.substring(foci + 1, spayload.length());
-  Serial.print("\nZweite Stelle:" + sv + "\n");
   address = fv;
 
 
@@ -86,7 +85,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
     int b = fov.toInt();  
   
     if (address == "all") {
-      Serial.print("\nKommt bei all an\n");
       for (int i = 0; i < NUMPIXELS; i++){
         pixels.setPixelColor(i, pixels.Color(r, g, b));
         pixels.show();
@@ -94,7 +92,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
   
     }
     else {
-      Serial.print("\nKommt bei Einzeladresse an\n");
       int lednum = address.toInt();
       pixels.setPixelColor(lednum, pixels.Color(r, g, b));
       pixels.show();
