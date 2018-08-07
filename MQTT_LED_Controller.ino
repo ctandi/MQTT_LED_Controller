@@ -22,14 +22,18 @@ StaticJsonBuffer<8192> jsonBuffer;
 JsonObject& blinkj = jsonBuffer.createObject();
 JsonObject& fastblinkj = jsonBuffer.createObject();
 
-// Connect to the WiFi
+//Ergänzen Sie hier die Daten Ihres WLANs und MQTT-Servers
 const char* ssid = "WIFI-SSID";
 const char* password = "PASSWORD";
+
 const char* mqtt_server = "192.168.1.1";
+//Den MQTT-Topic können Sie in der Reconnect-Funktion ändern
+
 
 WiFiClient espClient;
 PubSubClient client(espClient);
 
+//Sollten Grün und Rot vertauscht sein, ändern Sie NEO_RGB auf NEO_GRB
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_RGB + NEO_KHZ800);
 
 void callback(char* topic, byte* payload, unsigned int length) {
@@ -102,6 +106,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
 void reconnect() {
   while (!client.connected()) {
     if (client.connect("ESP8266 Client")) {
+      //Der Default-Topic lautet ledbar/lights. Sie können Ihn beliebig ändern
       client.subscribe("ledbar/lights");
       pixels.setPixelColor(0, pixels.Color(0, 50, 0));
       pixels.show();
