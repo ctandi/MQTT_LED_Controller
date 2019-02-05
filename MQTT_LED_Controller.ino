@@ -27,6 +27,8 @@ const char* ssid = "WIFI-SSID";
 const char* password = "PASSWORD";
 
 const char* mqtt_server = "192.168.1.1";
+const char* mqtt_user = "MQTT-USER";
+const char* mqtt_password = "MQTT-PASS";
 //Den MQTT-Topic können Sie in der Reconnect-Funktion ändern
 
 
@@ -105,7 +107,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 void reconnect() {
   while (!client.connected()) {
-    if (client.connect("ESP8266 Client")) {
+    if (client.connect("ESP8266 Client", mqtt_user, mqtt_password)) {
       //Der Default-Topic lautet ledbar/lights. Sie können Ihn beliebig ändern
       client.subscribe("ledbar/lights");
       pixels.setPixelColor(0, pixels.Color(0, 50, 0));
