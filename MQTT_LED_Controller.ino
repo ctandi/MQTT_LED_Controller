@@ -33,7 +33,6 @@ const char* mqtt_server = "192.168.1.1";
 //const char* mqtt_user = "MQTT-USER";
 //const char* mqtt_password = "MQTT-PASS";
 
-
 WiFiClient espClient;
 PubSubClient client(espClient);
 
@@ -95,8 +94,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
     if (address == "all") {
       for (int i = 0; i < NUMPIXELS; i++){
         pixels.setPixelColor(i, pixels.Color(r, g, b));
-        pixels.show();
         }
+      pixels.show();
   
     }
     else {
@@ -131,68 +130,44 @@ void reconnect() {
 class blinktask : public Task {
 protected:
   void loop() {
+    Serial.printf("Blinktask startet - %d\n",state);
     for (int i = 0; i < NUMPIXELS; i++) {
         String index = String(i);
-        if (blinkj[index]) {
-          r = blinkj[index]["r"].as<int>();
-          g = blinkj[index]["g"].as<int>();
-          b = blinkj[index]["b"].as<int>();
-          pixels.setPixelColor(i, pixels.Color(r, g, b));
+        pixels.setPixelColor(i, pixels.Color(0, 0, 0));
+        // Fastblink bei jedem 2. Durchgang einschalten
+        if ((state % 2) == 1) {
+          if (fastblinkj[index]) {
+            Serial.printf("f%d ",i);
+            r = fastblinkj[index]["r"].as<int>();
+            g = fastblinkj[index]["g"].as<int>();
+            b = fastblinkj[index]["b"].as<int>();
+            pixels.setPixelColor(i, pixels.Color(r, g, b));
+          }
         }
-        else {
-          delay(50);
+        // Normales Blink bei der oberen Haelfte der Durchgaenge einschalten
+        if ((state / 8) == 1) {
+          if (blinkj[index]) {
+            Serial.printf("b%d ",i);
+            r = blinkj[index]["r"].as<int>();
+            g = blinkj[index]["g"].as<int>();
+            b = blinkj[index]["b"].as<int>();
+            pixels.setPixelColor(i, pixels.Color(r, g, b));
+          }
         }
      }
-     pixels.show();
-     delay(750);
-     for (int i = 0; i < NUMPIXELS; i++) {
-        String index = String(i);
-        if (blinkj[index]) {
-          pixels.setPixelColor(i, pixels.Color(0, 0, 0));
-        }
-        else {
-          delay(50);
-        }
+     Serial.print(".\n");
+     if (state < 15) {
+       state = state + 1;
+     } else {
+       state = 0;
      }
      pixels.show();
-     delay(750);
+     delay(150);
+     Serial.printf("Blinktask fertig - %d\n", state);
   }
 private:
   uint8_t state;
 } blink_task;
-
-class fastblinktask : public Task {
-protected:
-  void loop() {
-    for (int i = 0; i < NUMPIXELS; i++) {
-        String index = String(i);
-        if (fastblinkj[index]) {
-          r = fastblinkj[index]["r"].as<int>();
-          g = fastblinkj[index]["g"].as<int>();
-          b = fastblinkj[index]["b"].as<int>();
-          pixels.setPixelColor(i, pixels.Color(r, g, b));
-        }
-        else {
-          delay(50);
-        }
-     }
-     pixels.show();
-     delay(100);
-     for (int i = 0; i < NUMPIXELS; i++) {
-        String index = String(i);
-        if (fastblinkj[index]) {
-          pixels.setPixelColor(i, pixels.Color(0, 0, 0));
-        }
-        else {
-          delay(50);
-        }
-     }
-     pixels.show();
-     delay(100);
-  }
-private:
-  uint8_t state;
-} fastblink_task;
 
 class MQTTtask : public Task {
 protected:
@@ -207,9 +182,11 @@ private:
 
 void setup()
 {
+  Serial.begin(9600);
   pixels.begin();
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
+  Serial.print("Connecting to WIFI");
 
   for (int i = 0; i < NUMPIXELS; i++)
       pixels.setPixelColor(i, pixels.Color(0, 0, 0));
@@ -222,18 +199,16 @@ void setup()
     pixels.setPixelColor(0, pixels.Color(0, 0, 0));
     pixels.show();
     delay(50);
+    Serial.print(".");
   }
-
+  Serial.print("Connected\n");
   
-  
-  Serial.begin(9600);
   delay(500);
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
 
   Scheduler.start(&mqtt_task);
   Scheduler.start(&blink_task);
-  Scheduler.start(&fastblink_task);
 
   Scheduler.begin();
   
