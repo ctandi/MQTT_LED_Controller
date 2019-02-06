@@ -9,6 +9,7 @@
 #define NUMPIXELS 12
 
 String address;
+char address_str[5];
 int r;
 int g;
 int b;
@@ -59,32 +60,61 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 
   if (sv == "blink" || sv == "fastblink" || sv == "stop"){
-    int firstaddress;
-    int iaddress = address.toInt();
-    
-    r = tv.toInt();
-    g = fov.toInt();
-    b = fiv.toInt();
-    
-    if (sv == "blink") {
-        JsonObject& led = blinkj.createNestedObject(address);
-        led["r"] = tv;
-        led["g"] = fov;
-        led["b"] = fiv;
-    }
-    else if (sv == "fastblink") {
-        JsonObject& led = fastblinkj.createNestedObject(address);
-        led["r"] = tv;
-        led["g"] = fov;
-        led["b"] = fiv;   
-    }
-    else if (sv == "stop") {
-      blinkj.remove(address);
-      fastblinkj.remove(address);
-      pixels.setPixelColor(iaddress, pixels.Color(0, 0, 0));
-      pixels.show();
+    if (address == "all") {
+      r = tv.toInt();
+      g = fov.toInt();
+      b = fiv.toInt();
+
+      for (int i = 0; i < NUMPIXELS; i++){
+        sprintf(address_str,"%d", i);        
+        if (sv == "blink") {
+            JsonObject& led = blinkj.createNestedObject(address_str);
+            led["r"] = tv;
+            led["g"] = fov;
+            led["b"] = fiv;
+        }
+        else if (sv == "fastblink") {
+            JsonObject& led = fastblinkj.createNestedObject(address_str);
+            led["r"] = tv;
+            led["g"] = fov;
+            led["b"] = fiv;   
+        }
+        else if (sv == "stop") {
+          blinkj.remove(address_str);
+          fastblinkj.remove(address_str);
+          pixels.setPixelColor(i, pixels.Color(0, 0, 0));
+          pixels.show();
+        }
+        pixels.setPixelColor(i, pixels.Color(r, g, b));
+        pixels.show();
       }
+    } else { 
+      int firstaddress;
+      int iaddress = address.toInt();
       
+      r = tv.toInt();
+      g = fov.toInt();
+      b = fiv.toInt();
+      
+      if (sv == "blink") {
+          JsonObject& led = blinkj.createNestedObject(address);
+          led["r"] = tv;
+          led["g"] = fov;
+          led["b"] = fiv;
+      }
+      else if (sv == "fastblink") {
+          JsonObject& led = fastblinkj.createNestedObject(address);
+          led["r"] = tv;
+          led["g"] = fov;
+          led["b"] = fiv;   
+      }
+      else if (sv == "stop") {
+        blinkj.remove(address);
+        fastblinkj.remove(address);
+        pixels.setPixelColor(iaddress, pixels.Color(0, 0, 0));
+        pixels.show();
+      }
+    } 
 }
   else {
     int r = sv.toInt();
@@ -133,25 +163,28 @@ protected:
     Serial.printf("Blinktask startet - %d\n",state);
     for (int i = 0; i < NUMPIXELS; i++) {
         String index = String(i);
-        pixels.setPixelColor(i, pixels.Color(0, 0, 0));
         // Fastblink bei jedem 2. Durchgang einschalten
-        if ((state % 2) == 1) {
-          if (fastblinkj[index]) {
+        if (fastblinkj[index]) {
+          if ((state % 2) == 1) {
             Serial.printf("f%d ",i);
             r = fastblinkj[index]["r"].as<int>();
             g = fastblinkj[index]["g"].as<int>();
             b = fastblinkj[index]["b"].as<int>();
             pixels.setPixelColor(i, pixels.Color(r, g, b));
+          } else {
+            pixels.setPixelColor(i, pixels.Color(0, 0, 0));
           }
         }
         // Normales Blink bei der oberen Haelfte der Durchgaenge einschalten
-        if ((state / 8) == 1) {
-          if (blinkj[index]) {
+        if (blinkj[index]) {
+          if ((state / 8) == 1) {
             Serial.printf("b%d ",i);
             r = blinkj[index]["r"].as<int>();
             g = blinkj[index]["g"].as<int>();
             b = blinkj[index]["b"].as<int>();
             pixels.setPixelColor(i, pixels.Color(r, g, b));
+          } else {
+            pixels.setPixelColor(i, pixels.Color(0, 0, 0));
           }
         }
      }
